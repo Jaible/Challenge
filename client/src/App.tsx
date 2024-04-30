@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
+import { Toaster, toast } from 'sonner'
 import './App.css'
 import { uploadFile } from './services/upload';
+import { Data } from './types';
+import { Search } from './steps/search';
 
 const APP_STATUS = {
   IDLE: "idle",
@@ -18,7 +21,8 @@ const BUTTON_TEXT = {
 
 function App() {
   const [appStatus, setAppStatus] = useState<AppStatusType>(APP_STATUS.IDLE);
-  const [file, setFile] = useState<File | null>(null);
+  const [Data, setData] = useState<Data>([]);
+  const [File, setFile] = useState<File | null>(null);
 
   // In this function we can know the moment when the user
   // upload his file and in that way, we can change the state
@@ -37,40 +41,61 @@ function App() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if(appStatus !== APP_STATUS.READY_UPLOAD || !file) {
+    if(appStatus !== APP_STATUS.READY_UPLOAD || !File) {
       return;
     }
     setAppStatus(APP_STATUS.UPLOADING);
 
-    const [err, data] = await uploadFile(file);
-    console.log({err, data});
+    const [err, newData] = await uploadFile(File);
+
+    if(err) {
+      setAppStatus(APP_STATUS.ERROR);
+      toast.error(err.message);
+      return;
+    }
+
+    setAppStatus(APP_STATUS.READY_USAGE)
+    if (newData) setData(newData);
+    toast.success("File uploaded correctly!")
   }
 
   const showButton = appStatus === APP_STATUS.READY_UPLOAD || appStatus === APP_STATUS.UPLOADING;
+  const showInput = appStatus !== APP_STATUS.READY_USAGE
 
   return (
     <>
+      <Toaster/>
       <h4>Challenge: CSV + Search</h4>
-      <form onSubmit={handleSubmit}>
-        <label>
-          <input 
-            onChange={handleInputChange} 
-            type="file" 
-            accept='.csv' 
-            name="file" 
-            id="file" 
-            disabled={appStatus === APP_STATUS.UPLOADING}/>
-        </label>
 
-        {/* In this way we can secure about the time when the
-            user can upload the file */}
-        {showButton && (
-          <button
-            disabled={appStatus === APP_STATUS.UPLOADING}>
-            {BUTTON_TEXT[appStatus]}
-          </button>
-        )}
-      </form>
+      {
+        showInput && (
+        <form onSubmit={handleSubmit}>
+          <label>
+            <input 
+              onChange={handleInputChange} 
+              type="file" 
+              accept='.csv' 
+              name="file" 
+              id="file" 
+              disabled={appStatus === APP_STATUS.UPLOADING}/>
+          </label>
+  
+          {/* In this way we can secure about the time when the
+              user can upload the file */}
+          {showButton && (
+            <button
+              disabled={appStatus === APP_STATUS.UPLOADING}>
+              {BUTTON_TEXT[appStatus]}
+            </button>
+          )}
+        </form>
+      )}
+
+      {
+        appStatus === APP_STATUS.READY_USAGE && (
+          <Search initialData={Data}/>
+        )
+      }
     </>
   )
 }

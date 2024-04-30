@@ -1,9 +1,10 @@
 {
-  "name": "Challenge",
+  "name": "root",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev" : "pnpm --filter ** dev",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
